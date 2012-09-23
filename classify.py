@@ -38,7 +38,6 @@ def load_vectors(filename, vector_group):
     frames = samples_to_16ms_frames(samples)
     vector_group += frames
 
-
 def load_data():
     noise_files = ["noise_samples/" + x for x in os.listdir("noise_samples")]
     voice_files = ["voice_samples/" + x for x in os.listdir("voice_samples")]
