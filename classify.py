@@ -43,7 +43,6 @@ def load_data():
     noise_files = ["noise_samples/" + x for x in os.listdir("noise_samples")]
     voice_files = ["voice_samples/" + x for x in os.listdir("voice_samples")]
 
-
     noise_vectors = []
     for item in noise_files:
         load_vectors(item, noise_vectors)
