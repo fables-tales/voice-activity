@@ -58,7 +58,7 @@ def train_classifier(voice_vectors, noise_vectors):
     train_attrs = voice_vectors + noise_vectors
     train_labels = [1]*len(voice_vectors) + [0]*len(noise_vectors)
 
-    c = RandomForestClassifier(n_estimators=50, verbose=0, n_jobs=1)
+    c = RandomForestClassifier(n_estimators=30, verbose=0, n_jobs=1)
     c.fit(train_attrs, train_labels)
 
     return c
