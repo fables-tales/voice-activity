@@ -18,7 +18,6 @@ def samples_to_16ms_frames(samples, framerate=44100):
     build = []
     ptr = 0
 
-
     while ptr < len(samples):
         build.append(samples[ptr])
         ptr += 1
