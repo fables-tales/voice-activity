@@ -68,7 +68,6 @@ if __name__ == "__main__":
     c = train_classifier(voice_vectors, noise_vectors)
     print "testing classifier"
 
-
     #test labels against results
     wrong = 0
     s = time.time()
