@@ -64,8 +64,11 @@ def train_classifier(voice_vectors, noise_vectors):
     return c
 
 if __name__ == "__main__":
+    print "loading data"
     voice_vectors, noise_vectors = load_data()
+    print "training classifer"
     c = train_classifier(voice_vectors, noise_vectors)
+    print "testing classifier"
 
 
     #test labels against results
@@ -75,6 +78,7 @@ if __name__ == "__main__":
         pred = c.predict(item)
         if pred != 1:
             wrong += 1
+
     for item in noise_vectors:
         pred = c.predict(item)
         if pred != 0:
