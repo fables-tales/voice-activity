@@ -87,4 +87,7 @@ if __name__ == "__main__":
     e = time.time()
     classifies = len(voice_vectors) + len(noise_vectors)
     cps = classifies*1.0/(e-s)
-    print wrong, classifies, wrong*100.0/classifies, cps, cps/60
+    print "results :)"
+    print
+    print "%18s %14s %15s %25s %12s" % ("classified wrong", "classified", "error rate", "classifies per second", "overspeed")
+    print "%18d %14d %15.3f %25.3f %12.3f" % (wrong, classifies, wrong*100.0/classifies, cps, cps/60)
