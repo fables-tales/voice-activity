@@ -1,7 +1,7 @@
 import wave
 import struct
 from math import ceil, floor
-import sys
+import sqlite3
 
 def extract_sample(waveobj, start_frame, end_frame):
     assert start_frame < end_frame
@@ -36,17 +36,18 @@ def write_samples_to_file(filename, samples):
 
 def make_audio_slice(waveobj, filename, start_seconds, end_seconds):
     samples = extract_sample_seconds(waveobj, start_seconds, end_seconds)
-    write_samples_to_file(filename, samples)
-
-
 
 if __name__ == "__main__":
-    waveobj             = wave.open(sys.argv[1])
-    voice_start_seconds = float(sys.argv[2])
-    voice_end_seconds   = float(sys.argv[3])
-    audio_end_seconds   = waveobj.getnframes()*1.0/waveobj.getframerate()
-
-    make_audio_slice(waveobj, "noise_samples/1.wav", 0, voice_start_seconds)
-    make_audio_slice(waveobj, "noise_samples/2.wav", voice_end_seconds, audio_end_seconds)
-
-    make_audio_slice(waveobj, "voice_samples/1.wav", voice_start_seconds, voice_end_seconds)
+    db = sqlite3.connect("db.sqlite")
+    cur = db.cursor()
+    for idx,row in enumerate(cur.execute("select * from samples")):
+        print idx
+        waveobj             = wave.open("source_audio/" + row[0])
+        start_seconds       = row[1]
+        end_seconds         = row[2]
+        if end_seconds == -1:
+            end_seconds = waveobj.getnframes()*1.0/waveobj.getframerate()
+        print end_seconds
+        voice               = bool(row[3])
+        keyboard            = bool(row[4])
+        slice = make_audio_slice(waveobj, "/tmp/result." + str(idx) + ".wav", start_seconds, end_seconds)
