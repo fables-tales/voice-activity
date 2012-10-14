@@ -11,6 +11,10 @@ import matplotlib.pyplot as pyplot
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.cross_validation import cross_val_score, StratifiedKFold
 
+PLOTTING = True
+
+if PLOTTING:
+    pyplot.ion()
 
 def get_samples(filename, start_seconds, end_seconds):
     waveobj = wave.open("source_audio/" + filename)
@@ -63,8 +67,30 @@ def n_zero_crossings(values):
 
     return n
 
-def load_vectors(filename, vector_group, start, end):
+def plot_spectrum(samples, freq, klass):
+    if PLOTTING:
+        n = len(samples)
+        k = scipy.arange(n)
+        T = n/freq
+        frq = k/T
+        frq = frq[range(n/2)]
+        Y = numpy.fft.fft(samples)
+        Y = Y[range(n/2)]
+        if klass == "voice":
+            color = "b"
+        elif klass == "keyboard":
+            color = "g"
+        else:
+            color = "r"
+        pyplot.plot(frq, abs(Y), color, alpha=0.5)
+        pyplot.xlabel("Freq (HZ)")
+        pyplot.ylabel("Y(freq)")
+
+
+
+def load_vectors(filename, vector_group, start, end, klass):
     samples = get_samples(filename, start, end)
+    plot_spectrum(samples, 48000, klass)
     frames = samples_to_16ms_frames(samples)
     ffts = numpy.abs(numpy.fft.fft(frames))
     features = []
@@ -78,6 +104,8 @@ def load_data():
     voice_samples    = []
     keyboard_samples = []
     noise_samples = []
+    if PLOTTING:
+        pyplot.figure()
     for row in cur.execute("SELECT * FROM samples where voice=1"):
         load_vectors(row[0], voice_samples, row[1], row[2])
 
@@ -85,7 +113,10 @@ def load_data():
         load_vectors(row[0], keyboard_samples, row[1], row[2])
 
     for row in cur.execute("SELECT * FROM samples where keyboard=0 and voice=0"):
-        load_vectors(row[0], noise_samples, row[1], row[2])
+        load_vectors(row[0], noise_samples, row[1], row[2], "noise")
+    if PLOTTING:
+        pyplot.draw()
+        pyplot.show()
 
     return voice_samples, keyboard_samples, noise_samples
 
@@ -129,22 +160,26 @@ def make_predictions(classifier1, classifier2, samples):
     preds1 = classifier1.predict_proba(samples)
     preds2 = classifier2.predict_proba(samples)
 
-    print preds1.shape
-    print len(samples)
     return [x[1] for x in preds1], [x[1] for x in preds2]
 
 def show_separation(classifier1, classifier2, positive1, positive2, negative):
-    preds_p1 = make_predictions(classifier1, classifier2, positive1)
-    preds_p2 = make_predictions(classifier1, classifier2, positive2)
-    preds_n  = make_predictions(classifier1, classifier2, negative)
+    if PLOTTING:
+        preds_p1 = make_predictions(classifier1, classifier2, positive1)
+        preds_p2 = make_predictions(classifier1, classifier2, positive2)
+        preds_n  = make_predictions(classifier1, classifier2, negative)
 
 
-    plt.scatter(preds_p1[1], preds_p1[0])
-    plt.scatter(preds_p2[1], preds_p2[0], c='g')
-    plt.scatter(preds_n[1], preds_n[0], c='r')
-    plt.xlim([0,1])
-    plt.ylim([0,1])
-    plt.show()
+        pyplot.figure()
+
+        pyplot.scatter(preds_p1[1], preds_p1[0],c='b')
+        pyplot.scatter(preds_p2[1], preds_p2[0], c='g')
+        pyplot.scatter(preds_n[1], preds_n[0], c='r')
+        pyplot.xlim([0,1])
+        pyplot.ylim([0,1])
+        pyplot.xlabel("P(voice)")
+        pyplot.ylabel("P(keyboard)")
+        pyplot.draw()
+        pyplot.show()
 
 if __name__ == "__main__":
     print "loading data"
@@ -168,6 +203,12 @@ if __name__ == "__main__":
     print "keyboard negative (voice) errors", errors(keyboard_classifier, voice_vectors, 0)
     print "voice negative (noise) errors", errors(keyboard_classifier, noise_vectors, 0)
     e = time.time()
-    print len(voice_vectors) + len(noise_vectors) + len(keyboard_vectors)
-    show_separation(voice_classifier, keyboard_classifier, voice_vectors, keyboard_vectors, noise_vectors)
+    print "voice vectors", len(voice_vectors)
+    print "keyboard vectors", len(keyboard_vectors)
+    print "noise vectors", len(noise_vectors)
+    print
 
+    print "seconds of audio", seconds
+    show_separation(voice_classifier, keyboard_classifier, voice_vectors, keyboard_vectors, noise_vectors)
+    if PLOTTING:
+        raw_input("hit enter to ragequit! ")
