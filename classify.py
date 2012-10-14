@@ -17,6 +17,7 @@ if PLOTTING:
     pyplot.ion()
 
 def get_samples(filename, start_seconds, end_seconds):
+    print filename, start_seconds, end_seconds
     waveobj = wave.open("source_audio/" + filename)
     width = waveobj.getsampwidth()
 
@@ -25,11 +26,15 @@ def get_samples(filename, start_seconds, end_seconds):
         end_samples = end_seconds * waveobj.getframerate()
     else:
         end_samples = waveobj.getnframes()
+        end_seconds = end_samples / waveobj.getframerate()
+    global seconds
+    seconds += end_seconds - start_seconds
 
     end_samples = int(end_samples)
 
     frames = []
     waveobj.setpos(start_samples)
+    print "d",end_samples-start_samples
     for i in xrange(start_samples, end_samples):
         frame = waveobj.readframes(1)
         if width == 2:
@@ -108,7 +113,10 @@ def load_vectors(filename, vector_group, start, end, klass):
         features.append(list(ffts[i]) + [n_zero_crossings(frames[i])])
     vector_group += features
 
+seconds = 0
+
 def load_data():
+    global seconds
     db = sqlite3.connect("db.sqlite")
     cur = db.cursor()
     voice_samples    = []
@@ -117,10 +125,10 @@ def load_data():
     if PLOTTING:
         pyplot.figure()
     for row in cur.execute("SELECT * FROM samples where voice=1"):
-        load_vectors(row[0], voice_samples, row[1], row[2])
+        load_vectors(row[0], voice_samples, row[1], row[2], "voice")
 
     for row in cur.execute("SELECT * FROM samples where keyboard=1"):
-        load_vectors(row[0], keyboard_samples, row[1], row[2])
+        load_vectors(row[0], keyboard_samples, row[1], row[2], "keyboard")
 
     for row in cur.execute("SELECT * FROM samples where keyboard=0 and voice=0"):
         load_vectors(row[0], noise_samples, row[1], row[2], "noise")
