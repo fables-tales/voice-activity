@@ -51,7 +51,7 @@ def get_samples(filename, start_seconds, end_seconds):
 
 window_width_ms = 16
 
-def samples_to_16ms_frames(samples, framerate=44100):
+def samples_to_16ms_frames(samples, framerate=48000):
     frame_size = int(window_width_ms/1000.0 * framerate)
     frames = []
     build = []
@@ -138,12 +138,11 @@ def load_data():
 
     return voice_samples, keyboard_samples, noise_samples
 
-
 def make_classifier():
-    c = RandomForestClassifier(n_estimators=100, verbose=0, n_jobs=1)
+    c = RandomForestClassifier(n_estimators=100, verbose=0, n_jobs=3)
     return c
 
-def train_classifier(positive_vectors, negative_vectors, cross_val=False):
+def train_classifier(positive_vectors, negative_vectors, cross_val=True):
     train_attrs = positive_vectors + negative_vectors
     train_labels = [1]*len(positive_vectors) + [0]*len(negative_vectors)
 
