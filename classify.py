@@ -2,11 +2,14 @@ import wave
 import numpy
 import struct
 import sqlite3
-import os
-from sklearn.ensemble import RandomForestClassifier
 import time
+
+import scipy
+
+import matplotlib.pyplot as pyplot
+
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.cross_validation import cross_val_score, StratifiedKFold
-import matplotlib.pyplot as plt
 
 
 def get_samples(filename, start_seconds, end_seconds):
