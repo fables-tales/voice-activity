@@ -18,6 +18,7 @@ if PLOTTING:
 
 def get_samples(filename, start_seconds, end_seconds):
     waveobj = wave.open("source_audio/" + filename)
+    width = waveobj.getsampwidth()
 
     start_samples = int(start_seconds * waveobj.getframerate())
     if end_seconds != -1:
@@ -30,8 +31,17 @@ def get_samples(filename, start_seconds, end_seconds):
     frames = []
     waveobj.setpos(start_samples)
     for i in xrange(start_samples, end_samples):
-        frames.append(struct.unpack("h", waveobj.readframes(1))[0])
+        frame = waveobj.readframes(1)
+        if width == 2:
+            frame = "\x00" + frame
+        negative = struct.unpack("b", frame[-1])[0] < 0
+        padding = "\xff" if negative else "\x00"
+        value = struct.unpack("<i", frame + padding)[0]
+        frames.append(value)
 
+    #if width == 2:
+    #    print "scaled"
+    print "m",max(frames)
     return frames
 
 window_width_ms = 16
