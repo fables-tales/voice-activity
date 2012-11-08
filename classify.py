@@ -7,80 +7,16 @@ import time
 import scipy
 
 import matplotlib.pyplot as pyplot
+import cPickle as pickle
 
 from sklearn.ensemble import RandomForestClassifier
+from vadutils import *
 from sklearn.cross_validation import cross_val_score, StratifiedKFold
 
 PLOTTING = True
 
 if PLOTTING:
     pyplot.ion()
-
-def get_samples(filename, start_seconds, end_seconds):
-    print filename, start_seconds, end_seconds
-    waveobj = wave.open("source_audio/" + filename)
-    width = waveobj.getsampwidth()
-
-    start_samples = int(start_seconds * waveobj.getframerate())
-    if end_seconds != -1:
-        end_samples = end_seconds * waveobj.getframerate()
-    else:
-        end_samples = waveobj.getnframes()
-        end_seconds = end_samples / waveobj.getframerate()
-    global seconds
-    seconds += end_seconds - start_seconds
-
-    end_samples = int(end_samples)
-
-    frames = []
-    waveobj.setpos(start_samples)
-    print "d",end_samples-start_samples
-    for i in xrange(start_samples, end_samples):
-        frame = waveobj.readframes(1)
-        if width == 2:
-            frame = "\x00" + frame
-        negative = struct.unpack("b", frame[-1])[0] < 0
-        padding = "\xff" if negative else "\x00"
-        value = struct.unpack("<i", frame + padding)[0]
-        frames.append(value)
-
-    #if width == 2:
-    #    print "scaled"
-    print "m",max(frames)
-    return frames
-
-window_width_ms = 16
-
-def samples_to_16ms_frames(samples, framerate=48000):
-    frame_size = int(window_width_ms/1000.0 * framerate)
-    frames = []
-    build = []
-    ptr = 0
-
-    while ptr < len(samples):
-        build.append(samples[ptr])
-        ptr += 1
-        if ptr % frame_size == 0:
-            frames.append(build)
-            build = []
-
-    if len(build) < frame_size:
-        length_diff = frame_size - len(build)
-        build += [0]*length_diff
-
-    frames.append(build)
-
-    return frames
-
-def n_zero_crossings(values):
-    n = 0
-    for i in xrange(1,len(values)):
-        sign1 = -1 if values[i-1] < 0 else 1
-        sign2 = -1 if values[i] < 0 else 1
-        if sign1 != sign2:
-            n += 1
-
-    return n
 
 def plot_spectrum(samples, freq, klass):
     if PLOTTING:
@@ -101,22 +37,7 @@ def plot_spectrum(samples, freq, klass):
         pyplot.xlabel("Freq (HZ)")
         pyplot.ylabel("Y(freq)")
 
-
-
-def load_vectors(filename, vector_group, start, end, klass):
-    samples = get_samples(filename, start, end)
-    plot_spectrum(samples, 48000, klass)
-    frames = samples_to_16ms_frames(samples)
-    ffts = numpy.abs(numpy.fft.fft(frames))
-    features = []
-    for i in range(0,len(frames)):
-        features.append(list(ffts[i]) + [n_zero_crossings(frames[i])])
-    vector_group += features
-
-seconds = 0
-
 def load_data():
-    global seconds
     db = sqlite3.connect("db.sqlite")
     cur = db.cursor()
     voice_samples    = []
@@ -142,7 +63,7 @@ def make_classifier():
     c = RandomForestClassifier(n_estimators=100, verbose=0, n_jobs=3)
     return c
 
-def train_classifier(positive_vectors, negative_vectors, cross_val=True):
+def train_classifier(positive_vectors, negative_vectors, cross_val=False):
     train_attrs = positive_vectors + negative_vectors
     train_labels = [1]*len(positive_vectors) + [0]*len(negative_vectors)
 
@@ -206,6 +127,10 @@ if __name__ == "__main__":
     keyboard_negative = noise_vectors + voice_vectors
     voice_classifier   = train_classifier(voice_vectors, voice_negative)
     keyboard_classifier = train_classifier(keyboard_vectors, keyboard_negative)
+    with open("classifier.pickle", "w") as packfile:
+        result = [voice_classifier, keyboard_classifier]
+        packfile.write(pickle.dumps(result))
+        print "done pickling"
 
     print "testing classifier"
 
@@ -225,7 +150,6 @@ if __name__ == "__main__":
     print "noise vectors", len(noise_vectors)
     print
 
-    print "seconds of audio", seconds
     show_separation(voice_classifier, keyboard_classifier, voice_vectors, keyboard_vectors, noise_vectors)
     if PLOTTING:
         raw_input("hit enter to ragequit! ")
