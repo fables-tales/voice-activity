@@ -6,6 +6,7 @@ from vadutils import getframe
 import vadutils
 import subprocess
 import numpy
+import sqlite3
 import cPickle as pickle
 
 SILENCE_THRESHOLD = (1<<24)*0.02
@@ -64,15 +65,37 @@ def play_region(filename, start_time, end_time):
     length = end_time - start_time
     invoke_mplayer(filename, start_time, length)
 
+def insert_sample(filename, start_time, end_time, voice, keyboard):
+    query = "INSERT INTO samples VALUES (?,?,?,?,?)"
+    conn = sqlite3.connect("db.sqlite")
+    cur = conn.cursor()
+    cur.execute(query, (filename, start_time, end_time, voice, keyboard))
+    conn.commit()
+
+def current_end_of_file(filename):
+    query = "SELECT max(endtime) from samples where sourcefile=?"
+    conn = sqlite3.connect("db.sqlite")
+    cur = conn.cursor()
+    cur.execute(query, (filename,))
+    v = cur.next()[0]
+    if v == None:
+        return 0
+    else:
+        return None
+
 if __name__ == "__main__":
     filename = sys.argv[1]
     wave_reader = wave.open(filename)
     voice_classifier,keyboard_classifier = pickle.load(open("classifier.pickle"))
     for i in range(0,10):
         start_time, end_time = find_endpoints(wave_reader)
+        while start_time <= current_end_of_file(filename):
+            start_time, end_time = find_endpoints(wave_reader)
         print start_time, end_time
         play_region(filename, start_time, end_time)
         vectors = []
         vadutils.load_vectors(filename, vectors,start_time, end_time)
         print numpy.average(voice_classifier.predict_proba(vectors), axis=0)
-        time.sleep(3)
+        voice = raw_input("was that voice? [y/n] ") == "y"
+        keyboard = raw_input("was that keyboard? [y/n] ") == "y"
+        insert_sample(filename, start_time, end_time, voice, keyboard)
