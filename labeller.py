@@ -81,16 +81,18 @@ def current_end_of_file(filename):
     if v == None:
         return 0
     else:
-        return None
+        return v
 
 if __name__ == "__main__":
     filename = sys.argv[1]
     wave_reader = wave.open(filename)
     voice_classifier,keyboard_classifier = pickle.load(open("classifier.pickle"))
-    for i in range(0,10):
+    start_time, end_time = find_endpoints(wave_reader)
+    print current_end_of_file(filename)
+    while start_time < current_end_of_file(filename):
         start_time, end_time = find_endpoints(wave_reader)
-        while start_time <= current_end_of_file(filename):
-            start_time, end_time = find_endpoints(wave_reader)
+    print start_time
+    for i in range(0,10):
         print start_time, end_time
         play_region(filename, start_time, end_time)
         vectors = []
@@ -99,3 +101,4 @@ if __name__ == "__main__":
         voice = raw_input("was that voice? [y/n] ") == "y"
         keyboard = raw_input("was that keyboard? [y/n] ") == "y"
         insert_sample(filename, start_time, end_time, voice, keyboard)
+        start_time, end_time = find_endpoints(wave_reader)
