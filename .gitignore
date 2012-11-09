@@ -1,2 +1,3 @@
 db.sqlite
 source_audio
+*.pyc
