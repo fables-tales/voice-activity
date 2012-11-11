@@ -79,7 +79,7 @@ def current_end_of_file(filename):
     else:
         return v
 
-if __name__ == "__main__":
+def main():
     filename = sys.argv[1]
     wave_reader = wave.open(filename)
     voice_classifier,keyboard_classifier = pickle.load(open("classifier.pickle"))
@@ -98,3 +98,6 @@ if __name__ == "__main__":
         keyboard = raw_input("was that keyboard? [y/n] ") == "y"
         insert_sample(filename, start_time, end_time, voice, keyboard)
         start_time, end_time = find_endpoints(wave_reader)
+
+if __name__ == "__main__":
+    main()
