@@ -101,12 +101,18 @@ def main():
     print start_time
     for i in range(0,50):
         print start_time, end_time
-        play_region(filename, start_time, end_time)
-        vectors = []
-        vadutils.load_vectors(filename, vectors,start_time, end_time)
-        print numpy.average(voice_classifier.predict_proba(vectors), axis=0)
-        voice = raw_input("was that voice? [y/n] ") == "y"
-        keyboard = raw_input("was that keyboard? [y/n] ") == "y"
+        if numpy.sum(vadutils.read_region(filename, start_time, end_time-start_time)) == 0:
+            print "silence detected!"
+            voice = False
+            keyboard = False
+        else:
+            play_region(filename, start_time, end_time)
+            vectors = []
+            vadutils.load_vectors(filename, vectors,start_time, end_time)
+            print numpy.average(voice_classifier.predict_proba(vectors), axis=0)
+            voice = raw_input("was that voice? [y/n] ") == "y"
+            keyboard = raw_input("was that keyboard? [y/n] ") == "y"
+
         insert_sample(filename, start_time, end_time, voice, keyboard)
         start_time, end_time = find_endpoints(wave_reader)
         if abs(current_time(wave_reader)-sample_end_time(wave_reader)) <= 0.5:
