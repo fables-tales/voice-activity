@@ -25,7 +25,7 @@ def wind_region(wave_reader):
     values = vadutils.getframes(wave_reader, WINDOW_WIDTH)
 
     mode = 0
-    if is_frame_silent(sum(values)/len(values)):
+    if is_frame_silent(numpy.sum(values)):
         mode = SILENCE
     else:
         mode = SOUND
@@ -35,7 +35,7 @@ def wind_region(wave_reader):
     while mode == original_mode:
         values = vadutils.getframes(wave_reader, WINDOW_WIDTH)
 
-        if is_frame_silent(sum(values)/len(values)):
+        if is_frame_silent(numpy.sum(values)):
             mode = SILENCE
         else:
             mode = SOUND
