@@ -33,11 +33,9 @@ def cut_region(in_file_name, start_time, length, out_file_name):
 
     wave_reader.setpos(int(start_time*wave_reader.getframerate()))
 
-    for i in xrange(0, int(length*wave_reader.getframerate())):
-        value = getframe(wave_reader)
-        array = struct.pack("i", value)
-        array = array[0:3]
-        wave_writer.writeframes(array)
+    frames = getframes(wave_reader, int(length*wave_reader.getframerate()))
+    outframes = [struct.pack("i", frame)[0:3] for frame in frames]
+    wave_writer.writeframes("".join(outframes))
 
     wave_writer.close()
 
