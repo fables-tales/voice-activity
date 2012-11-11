@@ -2,7 +2,6 @@ from __future__ import division
 import time
 import sys
 import wave
-from vadutils import getframe
 import vadutils
 import subprocess
 import numpy
@@ -23,9 +22,7 @@ def current_time(wave_reader):
     return wave_reader.tell()/samplerate
 
 def wind_region(wave_reader):
-    values = [0]*WINDOW_WIDTH
-    for i in range(0,WINDOW_WIDTH):
-        values[i] = abs(getframe(wave_reader))
+    values = vadutils.getframes(wave_reader, WINDOW_WIDTH)
 
     mode = 0
     if is_frame_silent(sum(values)/len(values)):
@@ -36,8 +33,7 @@ def wind_region(wave_reader):
     original_mode = mode
 
     while mode == original_mode:
-        for i in range(0,WINDOW_WIDTH):
-            values[i] = abs(getframe(wave_reader))
+        values = vadutils.getframes(wave_reader, WINDOW_WIDTH)
 
         if is_frame_silent(sum(values)/len(values)):
             mode = SILENCE
