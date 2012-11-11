@@ -23,6 +23,12 @@ def getframes(wave_reader, nframes):
 
     return frames
 
+def read_region(in_file_name, start_time, length):
+    wave_reader = wave.open(in_file_name)
+    wave_reader.setpos(int(start_time*wave_reader.getframerate()))
+    frames = getframes(wave_reader, int(length*wave_reader.getframerate()))
+    return frames
+
 def cut_region(in_file_name, start_time, length, out_file_name):
     wave_reader = wave.open(in_file_name)
     tf = open(out_file_name, "w")
