@@ -83,12 +83,16 @@ def main():
     filename = sys.argv[1]
     wave_reader = wave.open(filename)
     voice_classifier,keyboard_classifier = pickle.load(open("classifier.pickle"))
+    wave_reader.setpos(int(current_end_of_file(filename)*48000)+1)
+    print "bees"
+    print current_time(wave_reader)
     start_time, end_time = find_endpoints(wave_reader)
-    print current_end_of_file(filename)
+    print "bees2"
     while start_time < current_end_of_file(filename):
+        assert False
         start_time, end_time = find_endpoints(wave_reader)
     print start_time
-    for i in range(0,10):
+    for i in range(0,50):
         print start_time, end_time
         play_region(filename, start_time, end_time)
         vectors = []
