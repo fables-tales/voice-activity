@@ -3,15 +3,25 @@ import struct
 import wave
 import numpy
 
-def getframe(wave_reader):
+def decode_frame(wave_reader, frame):
     width = wave_reader.getsampwidth()
-    frame = wave_reader.readframes(1)
     if width == 2:
         frame = "\x00" + frame
     negative = struct.unpack("b", frame[-1])[0] < 0
     padding = "\xff" if negative else "\x00"
     value = struct.unpack("<i", frame + padding)[0]
     return value
+
+def getframe(wave_reader):
+    frame = wave_reader.readframes(1)
+    return decode_frame(wave_reader, frame)
+
+def getframes(wave_reader, nframes):
+    buf = wave_reader.readframes(nframes)
+    width = wave_reader.getsampwidth()
+    frames = [decode_frame(wave_reader, buf[i:i+width]) for i in xrange(0,len(buf),width)]
+
+    return frames
 
 def cut_region(in_file_name, start_time, length, out_file_name):
     wave_reader = wave.open(in_file_name)
