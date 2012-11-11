@@ -79,11 +79,18 @@ def current_end_of_file(filename):
     else:
         return v
 
+def sample_end_time(wave_reader):
+    return wave_reader.getnframes()*1.0/wave_reader.getframerate()
+
 def main():
     filename = sys.argv[1]
     wave_reader = wave.open(filename)
     voice_classifier,keyboard_classifier = pickle.load(open("classifier.pickle"))
-    wave_reader.setpos(int(current_end_of_file(filename)*48000)+1)
+    try:
+        wave_reader.setpos(int(current_end_of_file(filename)*48000)+1)
+    except:
+        print "file done"
+        return
     print "bees"
     print current_time(wave_reader)
     start_time, end_time = find_endpoints(wave_reader)
@@ -102,6 +109,8 @@ def main():
         keyboard = raw_input("was that keyboard? [y/n] ") == "y"
         insert_sample(filename, start_time, end_time, voice, keyboard)
         start_time, end_time = find_endpoints(wave_reader)
+        if abs(current_time(wave_reader)-sample_end_time(wave_reader)) <= 0.5:
+            break
 
 if __name__ == "__main__":
     main()
